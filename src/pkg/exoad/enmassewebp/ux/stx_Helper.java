@@ -28,6 +28,20 @@ public final class stx_Helper
     return button;
   }
 
+    public static JButton make(String text, String tooltip, Runnable r)
+  {
+    JButton button = new JButton(text);
+    button.addActionListener(ev -> r.run());
+    button.setBorderPainted(false);
+    button.setFocusPainted(false);
+    button.setRolloverEnabled(false);
+    button.setToolTipText(tooltip);
+    button.setBackground(null);
+    button.setAlignmentX(Component.CENTER_ALIGNMENT);
+    return button;
+  }
+
+
   public static Image repack(BufferedImage image, int width, int height)
   {
     return image.getScaledInstance(width, height, Image.SCALE_SMOOTH);

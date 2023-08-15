@@ -12,7 +12,6 @@ import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
-import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.FontUIResource;
 
 import com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatArcDarkIJTheme;
@@ -39,14 +38,11 @@ public final class EnMasseWebp
     try
     {
       UIManager.setLookAndFeel(new FlatArcDarkIJTheme());
-      UIManager.put("ScrollBar.background", new ColorUIResource(0, 0, 0));
       UIManager.put("ScrollBar.showButtons", false);
       UIManager.put("JScrollPane.smoothScrolling", true);
       UIManager.put("SplitPaneDivider.gripDotCount", 4);
-      UIManager.put("Component.focusedBorderColor", new ColorUIResource(0, 0, 0));
-      UIManager.put("Component.focusColor", new ColorUIResource(0, 0, 0));
-      UIManager.put("TabbedPane.tabSeparatorsFullHeight", false);
-      UIManager.put("TabbedPane.showTabSeparators", true);
+      UIManager.put("Button.arc", 10);
+      UIManager.put("Component.arc", 10);
 
       for (Font f : new Font[] {
           Font.createFont(Font.TRUETYPE_FONT, _1const.assets.file("assets/font/FiraSans-Bold.ttf")).deriveFont(14F),
