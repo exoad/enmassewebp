@@ -43,6 +43,7 @@ public final class EnMasseWebp
       UIManager.put("SplitPaneDivider.gripDotCount", 4);
       UIManager.put("Button.arc", 10);
       UIManager.put("Component.arc", 10);
+      UIManager.put("ProgressBar.arc", 15);
 
       for (Font f : new Font[] {
           Font.createFont(Font.TRUETYPE_FONT, _1const.assets.file("assets/font/FiraSans-Bold.ttf")).deriveFont(14F),

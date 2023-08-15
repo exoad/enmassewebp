@@ -14,7 +14,8 @@ public class ui_Socials
 {
   public ui_Socials()
   {
-    setPreferredSize(new Dimension(_2const.WIDTH, 22));
+    setPreferredSize(new Dimension(_2const.WIDTH, 40));
+    setMaximumSize(getPreferredSize());
     setLayout(new FlowLayout(FlowLayout.CENTER));
     add(stx_Helper.make(new ImageIcon(stx_Helper.repack(_1const.assets.image("assets/github-logo.png"), 20, 20)),
         "<html>Visit this project on <strong>GitHub!</strong></html>",
