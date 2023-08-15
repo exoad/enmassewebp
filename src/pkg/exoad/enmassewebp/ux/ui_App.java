@@ -6,7 +6,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.GridLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -41,6 +40,8 @@ public final class ui_App
     implements
     Runnable
 {
+  // name, {tooltip, selected}
+
   private JFileChooser jfc;
   private JProgressBar p1, p2, p3;
   private final String FILES_LOAD = "Files Buffer [Inactive]", BUFF_HEALTH = "Buffer Health [Inactive]",
@@ -131,6 +132,13 @@ public final class ui_App
 
     controls.add(controls_naming);
 
+    JCheckBox jcb_deepscan = new JCheckBox("Deep scan", false);
+    jcb_deepscan.setToolTipText("Look through all sub folders under a folder");
+    jcb_deepscan.setAlignmentX(Component.CENTER_ALIGNMENT);
+    /*-------------------------------------------------------------------------------------------------------- /
+    / jcb.addActionListener(ev -> preload_Properties.put(x, stl_Struct.make_pair(y.first, jcb.isSelected()))); /
+    /---------------------------------------------------------------------------------------------------------*/
+
     JButton select_btn = new JButton(
         "<html><p style=\"text-align:center\"><strong>Select folder/file(s)</strong><br /><em>Or drag and drop them here</em></p></html>");
     select_btn.addActionListener(ev -> {
@@ -169,36 +177,70 @@ public final class ui_App
         p1.setToolTipText("Files Buffer");
         p1.setIndeterminate(false);
         files.clear();
-
-        for (File file : jfc.getSelectedFiles()) // lmfao prob couldve have done this part with better recursion
+        if (!jcb_deepscan.isSelected())
         {
-          if (file.isFile())
+          System.out.println("[FILE I/O]: Using I/O without DEEP_SCAN");
+          for (File file : jfc.getSelectedFiles()) // lmfao prob couldve have done this part with better recursion
           {
-            System.out.println("[FILE I/O]: Loaded FILE: " + file.getAbsolutePath());
-            files.add(file);
-            p1.setValue(files.size() / jfc.getSelectedFiles().length);
-            p1.setToolTipText(Double.toString(files.size() / (double) jfc.getSelectedFiles().length));
-          }
-          else if (file.isDirectory())
-          {
-            System.out.println("[FILE I/O]: Expanding FOLDER: " + file.getAbsolutePath());
-            for (File file_expanded : file.listFiles())
+            if (file.isFile())
             {
-              if (stx_Helper.has_perms(file_expanded))
+              System.out.println("[FILE I/O]: Loaded FILE: " + file.getAbsolutePath());
+              files.add(file);
+              p1.setValue(files.size() / jfc.getSelectedFiles().length);
+              p1.setToolTipText(Double.toString(files.size() / (double) jfc.getSelectedFiles().length));
+            }
+            else if (file.isDirectory())
+            {
+              System.out.println("[FILE I/O]: Expanding FOLDER: " + file.getAbsolutePath());
+              for (File file_expanded : file.listFiles())
               {
-                System.out.println("[FILE I/O]: Loaded FILE_EXPANDED: " + file_expanded.getAbsolutePath());
-                files.add(file);
-                p1.setValue(files.size() / jfc.getSelectedFiles().length);
-                p1.setToolTipText(Double.toString(files.size() / (double) jfc.getSelectedFiles().length));
+                if (stx_Helper.has_perms(file_expanded))
+                {
+                  System.out.println("[FILE I/O]: Loaded FILE_EXPANDED: " + file_expanded.getAbsolutePath());
+                  files.add(file);
+                  p1.setValue(files.size() / jfc.getSelectedFiles().length);
+                  p1.setToolTipText(Double.toString(files.size() / (double) jfc.getSelectedFiles().length));
+                }
+              }
+            }
+          }
+        }
+        else
+        {
+          System.out.println("[FILE I/O]: Using I/O with DEEP_SCAN");
+          for (File file : jfc.getSelectedFiles()) // lmfao prob couldve have done this part with better recursion
+          {
+            if (file.isFile())
+            {
+              System.out.println("[FILE I/O]: Loaded (DEEP_SCAN) FILE: " + file.getAbsolutePath());
+              files.add(file);
+              p1.setValue(files.size() / jfc.getSelectedFiles().length);
+              p1.setToolTipText(Double.toString(files.size() / (double) jfc.getSelectedFiles().length));
+            }
+            else if (file.isDirectory())
+            {
+              System.out.println("[FILE I/O]: Expanding (DEEP_SCAN) FOLDER: " + file.getAbsolutePath());
+              for (File file_expanded : file.listFiles())
+              {
+                if (stx_Helper.has_perms(file_expanded))
+                {
+                  System.out.println("[FILE I/O]: Loaded FILE_EXPANDED: " + file_expanded.getAbsolutePath());
+                  files.add(file);
+                  p1.setValue(files.size() / jfc.getSelectedFiles().length);
+                  p1.setToolTipText(Double.toString(files.size() / (double) jfc.getSelectedFiles().length));
+                }
               }
             }
           }
         }
         System.out.println("[FILE I/O]: Total: " + files.size());
-        for (Component r : controls_naming.getComponents())
+        if (files.size() > 0)
         {
-          if (r instanceof JComponent jc)
-            jc.setEnabled(false);
+          for (Component r : controls_naming.getComponents())
+            if (r instanceof JComponent jc)
+              jc.setEnabled(true);
+          p1.setValue(100); // %
+          p1.setToolTipText("Loaded: " + files.size());
         }
 
       }
@@ -209,6 +251,7 @@ public final class ui_App
 
     add(app_title);
     add(new ui_Socials());
+    add(jcb_deepscan);
     add(select_btn);
     add(Box.createVerticalStrut(15));
     add(controls);
