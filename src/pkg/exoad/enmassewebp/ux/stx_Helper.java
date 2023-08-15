@@ -6,6 +6,7 @@ import java.awt.Component;
 import java.awt.Desktop;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -28,7 +29,7 @@ public final class stx_Helper
     return button;
   }
 
-    public static JButton make(String text, String tooltip, Runnable r)
+  public static JButton make(String text, String tooltip, Runnable r)
   {
     JButton button = new JButton(text);
     button.addActionListener(ev -> r.run());
@@ -41,6 +42,10 @@ public final class stx_Helper
     return button;
   }
 
+  public static boolean has_perms(File f)
+  {
+    return f.isFile() && f.canRead() && f.canWrite() && f.getAbsolutePath().toLowerCase().endsWith(".webp");
+  }
 
   public static Image repack(BufferedImage image, int width, int height)
   {

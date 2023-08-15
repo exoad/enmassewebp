@@ -6,10 +6,12 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.io.File;
+import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -18,6 +20,9 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileView;
+
+import javax.swing.ImageIcon;
 
 import com.jackmeng.stl.stl_Colors;
 
@@ -30,6 +35,8 @@ public final class ui_App
     Runnable
 {
   private JFileChooser jfc;
+
+  private ArrayList< File > files = new ArrayList<>();
 
   public ui_App()
   {
@@ -76,23 +83,48 @@ public final class ui_App
 
           @Override public boolean accept(File f)
           {
-            return f.isDirectory()
-                || (f.isFile() && f.canRead() && f.canWrite() && f.getAbsolutePath().toLowerCase().endsWith(".webp"));
+            return f.isDirectory() || stx_Helper.has_perms(f);
           }
         }));
       }
       jfc.setAcceptAllFileFilterUsed(false); // might be funky
       jfc.setPreferredSize(new Dimension(800, 650));
       jfc.setMultiSelectionEnabled(true);
+      jfc.setFileView(new FileView() {
+        @Override public Icon getIcon(File f)
+        {
+          if (f.isDirectory())
+            return new ImageIcon(stx_Helper.repack(_1const.assets.image("assets/folder-icon.png"), 22, 22));
+          return new ImageIcon(stx_Helper.repack(_1const.assets.image("assets/image-icon.png"), 22, 22));
+        }
+      });
       jfc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
       jfc.setDialogTitle("Select folders or files");
       int res = jfc.showOpenDialog(this);
       if (res == JFileChooser.APPROVE_OPTION)
       {
-        for (File file : jfc.getSelectedFiles())
+        files.clear();
+        for (File file : jfc.getSelectedFiles()) // lmfao prob couldve have done this part with better recursion
         {
-          System.out.println("[FILE I/O]: Loaded: " + file.getAbsolutePath());
+          if (file.isFile())
+          {
+            System.out.println("[FILE I/O]: Loaded FILE: " + file.getAbsolutePath());
+            files.add(file);
+          }
+          else if (file.isDirectory())
+          {
+            System.out.println("[FILE I/O]: Expanding FOLDER: " + file.getAbsolutePath());
+            for (File file_expanded : file.listFiles())
+            {
+              if (stx_Helper.has_perms(file_expanded))
+              {
+                System.out.println("[FILE I/O]: Loaded FILE_EXPANDED: " + file_expanded.getAbsolutePath());
+                files.add(file);
+              }
+            }
+          }
         }
+        System.out.println("[FILE I/O]: Total: " + files.size());
       }
     });
     select_btn.setBackground(stl_Colors.hexToRGB("#8ed15a"));
