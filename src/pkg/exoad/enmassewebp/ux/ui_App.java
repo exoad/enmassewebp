@@ -2,15 +2,16 @@
 
 package pkg.exoad.enmassewebp.ux;
 
-import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import javax.swing.WindowConstants;
 
 import pkg.exoad.enmassewebp._1const;
 
@@ -31,12 +32,10 @@ public final class ui_App
     contentPane_new.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
     setContentPane(contentPane_new);
 
-    JPanel logoNTitle = new JPanel();
-    logoNTitle.setLayout(new FlowLayout(FlowLayout.LEFT));
-
-    add(new JLabel(
+    JLabel app_title = new JLabel(
         """
             <html>
+              <p style="text-align:center">
                     <strong style="font-size: 24px;">
                       EnMasse
                       <strong style="color: #ccd13f;">
@@ -47,14 +46,20 @@ public final class ui_App
                     <em style="font-size: 8.5px; color: #828282;">
                       made by exoad
                     </em>
+              </p>
             </html>
-              """));
-    add(new ui_Line(Color.gray, 50, true, 2));
+              """);
+    app_title.setHorizontalAlignment(SwingConstants.CENTER);
+    app_title.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+    add(app_title);
+    add(new ui_Socials());
   }
 
   @Override public void run()
   {
     pack();
+    setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
     setLocationRelativeTo(null);
     setVisible(true);
   }
