@@ -8,7 +8,6 @@ import java.awt.Font;
 import java.awt.FontFormatException;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
@@ -72,7 +71,7 @@ public final class EnMasseWebp
       e.printStackTrace();
     }
 
-    System.setOut(new PrintStream(new ui_App.use_TextOutStream(), true, StandardCharsets.UTF_16));
+    System.setOut(new PrintStream(new ui_App.use_TextOutStream()));
   }
 
   public static void main(String... args)

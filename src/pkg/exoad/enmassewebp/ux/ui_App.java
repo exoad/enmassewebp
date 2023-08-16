@@ -34,7 +34,6 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileView;
@@ -59,7 +58,9 @@ public final class ui_App
   {
     @Override public void write(byte[] buffer, int offset, int length)
     {
-      SwingUtilities.invokeLater(() -> print(new String(buffer, offset, length)));
+      String content = new String(buffer, offset, length);
+      System.err.print(content);
+      print(content);
     }
 
     @Override public void write(int b) throws IOException
@@ -86,6 +87,7 @@ public final class ui_App
     process_output = new JEditorPane();
     process_output.setContentType("text/html");
     process_output.setEditable(false);
+    process_output.setText("<html><body>");
   }
   private JFileChooser jfc;
   private JProgressBar p1, p2, p3;
@@ -306,6 +308,7 @@ public final class ui_App
     add(app_title);
     add(new ui_Socials());
     add(jcb_deepscan);
+    add(Box.createVerticalStrut(15));
     add(select_btn);
     add(Box.createVerticalStrut(15));
     add(controls);
