@@ -16,7 +16,7 @@ public class ui_Socials
   {
     setPreferredSize(new Dimension(_2const.WIDTH, 40));
     setMaximumSize(getPreferredSize());
-    setLayout(new FlowLayout(FlowLayout.CENTER));
+    setLayout(new ux_WrapLayout(FlowLayout.CENTER, 4, 0));
     add(stx_Helper.make(new ImageIcon(stx_Helper.repack(_1const.assets.image("assets/github-logo.png"), 20, 20)),
         "<html>Visit this project on <strong>GitHub!</strong></html>",
         stx_Helper.browse_safe("https://github.com/exoad/enmassewebp")));

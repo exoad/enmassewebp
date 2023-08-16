@@ -4,6 +4,6 @@ package pkg.exoad.enmassewebp.ux;
 
 public interface _2const
 {
-  int WIDTH = 540;
-  int HEIGHT = 780;
+  int WIDTH = 480;
+  int HEIGHT = 550;
 }

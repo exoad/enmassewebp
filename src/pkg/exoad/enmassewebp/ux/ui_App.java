@@ -16,6 +16,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.TimerTask;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -42,6 +44,7 @@ import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.ImageIcon;
 
+import com.jackmeng.stl.stl_Chrono;
 import com.jackmeng.stl.stl_Colors;
 
 import pkg.exoad.enmassewebp._1const;
@@ -59,7 +62,7 @@ public final class ui_App
     @Override public void write(byte[] buffer, int offset, int length)
     {
       String content = new String(buffer, offset, length);
-      System.err.print(content);
+      System.err.print(content.replaceAll("<[^>]*>", ""));
       print(content);
     }
 
@@ -74,7 +77,10 @@ public final class ui_App
     try
     {
       ((HTMLEditorKit) process_output.getEditorKit()).insertHTML((HTMLDocument) process_output.getDocument(),
-          ((HTMLDocument) process_output.getDocument()).getLength(), str, 0, 0, null);
+          ((HTMLDocument) process_output.getDocument()).getLength(),
+          "<strong style=\"color:#8ed15a\">" + stl_Chrono.format_millis("HH:mm:ss") + "</strong> | " + str, 0,
+          0, null);
+      process_output.setCaretPosition(process_output.getDocument().getLength());
     } catch (BadLocationException | IOException e)
     {
       e.printStackTrace();
@@ -86,13 +92,15 @@ public final class ui_App
   {
     process_output = new JEditorPane();
     process_output.setContentType("text/html");
-    process_output.setEditable(false);
+    process_output.setAutoscrolls(true);
     process_output.setText("<html><body>");
   }
   private JFileChooser jfc;
   private JProgressBar p1, p2, p3;
   private final String FILES_LOAD = "Files Buffer [Inactive]", BUFF_HEALTH = "Buffer Health [Inactive]",
       MEM_USAGE = "Memory Usage";
+
+  private ExecutorService worker = Executors.newWorkStealingPool();
 
   private ArrayList< File > files = new ArrayList<>();
 
@@ -123,7 +131,7 @@ public final class ui_App
               </p>
             </html>
               """);
-    app_title.setHorizontalAlignment(SwingConstants.CENTER);
+    app_title.setMaximumSize(app_title.getPreferredSize());
     app_title.setAlignmentX(Component.CENTER_ALIGNMENT);
 
     p1 = new JProgressBar(SwingConstants.HORIZONTAL);
@@ -159,17 +167,24 @@ public final class ui_App
     progress_pane.add(p1);
     progress_pane.add(p2);
     progress_pane.add(p3);
+    progress_pane.setMaximumSize(progress_pane.getPreferredSize());
 
     JPanel controls = new JPanel();
     controls.setEnabled(false);
     controls.setLayout(new BoxLayout(controls, BoxLayout.Y_AXIS));
 
+    JCheckBox delete_orig = stx_Helper.make("Delete original", "Deletes the original .webp file.", false);
+    JCheckBox random_name = stx_Helper.make("Random name",
+        "Renames the convertted file to have a random name. If this is false, the original file name is preserved.",
+        false);
+    JCheckBox prefer_png = stx_Helper.make("Prefer PNG",
+        "Uses PNG instead of JPG. This option is best when dealing with transparency.", true);
+
     JPanel controls_naming = new JPanel();
     controls_naming.setLayout(new ux_WrapLayout(FlowLayout.CENTER, 8, 0));
-    controls_naming.add(new JCheckBox("Delete original", false));
-    controls_naming.add(new JCheckBox("Same name", true));
-    controls_naming.add(new JCheckBox("Same metadata", true));
-    controls_naming.add(new JCheckBox("Prefer PNG over JPG", true));
+    controls_naming.add(delete_orig);
+    controls_naming.add(random_name);
+    controls_naming.add(prefer_png);
 
     for (Component r : controls_naming.getComponents())
     {
@@ -178,6 +193,7 @@ public final class ui_App
     }
 
     controls.add(controls_naming);
+    controls.setMaximumSize(controls.getPreferredSize());
 
     JCheckBox jcb_deepscan = new JCheckBox("Deep scan", false);
     jcb_deepscan.setToolTipText("Look through all sub folders under a folder");
@@ -185,6 +201,36 @@ public final class ui_App
     /*-------------------------------------------------------------------------------------------------------- /
     / jcb.addActionListener(ev -> preload_Properties.put(x, stl_Struct.make_pair(y.first, jcb.isSelected()))); /
     /---------------------------------------------------------------------------------------------------------*/
+
+    JButton kill_action = new JButton("<html><strong>Kill conversion</strong></html>");
+    kill_action.setIconTextGap(5);
+    kill_action.setIcon(new ImageIcon(stx_Helper.repack(_1const.assets.image("assets/warning.png"), 20, 20)));
+    kill_action.setEnabled(false);
+    kill_action.setToolTipText("Kill the conversion process");
+    kill_action.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+    JButton start_action = new JButton("<html><strong>Start conversion</strong></html>");
+    start_action.setEnabled(false);
+    start_action.setIcon(new ImageIcon(stx_Helper.repack(_1const.assets.image("assets/start.png"), 20, 20)));
+    start_action.setToolTipText("Starts the conversion for the selected medium");
+    start_action.setAlignmentX(Component.LEFT_ALIGNMENT);
+    start_action.addActionListener(ev -> {
+      kill_action.setEnabled(true);
+    });
+
+    JPanel action_controls = new JPanel();
+    action_controls.setLayout(new ux_WrapLayout(FlowLayout.CENTER, 4, 0));
+    action_controls.add(start_action);
+    action_controls.add(kill_action);
+    action_controls.setMaximumSize(action_controls.getPreferredSize());
+    action_controls.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+    JButton runbg_btn = new JButton("<html><p style=\"text-align:center\"><strong>Scan background</strong></p></html>");
+    runbg_btn.setToolTipText(
+        "Runs a continuous check on the user's home directory for any webp pictures and converts them.");
+    runbg_btn
+        .setMaximumSize(new Dimension(runbg_btn.getPreferredSize().width + 40, runbg_btn.getPreferredSize().height));
+    runbg_btn.setAlignmentX(Component.CENTER_ALIGNMENT);
 
     JButton select_btn = new JButton(
         "<html><p style=\"text-align:center\"><strong>Select folder/file(s)</strong><br /><em>Or drag and drop them here</em></p></html>");
@@ -294,6 +340,12 @@ public final class ui_App
               jc.setEnabled(true);
           p1.setValue(100); // %
           p1.setToolTipText("Loaded: " + files.size());
+          start_action.setEnabled(true);
+        }
+        else
+        {
+          System.out.println("<strong>Maybe you forgot to turn on DEEP_SCAN?</strong>");
+          process_output.requestFocus(true);
         }
       }
     });
@@ -302,18 +354,20 @@ public final class ui_App
     select_btn.setAlignmentX(Component.CENTER_ALIGNMENT);
 
     JScrollPane jsp_output_text = new JScrollPane();
-
     jsp_output_text.setViewportView(process_output);
 
-    add(app_title);
+    add(app_title, 0);
     add(new ui_Socials());
     add(jcb_deepscan);
-    add(Box.createVerticalStrut(15));
     add(select_btn);
-    add(Box.createVerticalStrut(15));
+    add(runbg_btn);
+    add(Box.createVerticalStrut(10));
     add(controls);
+    add(action_controls);
     add(jsp_output_text);
     add(progress_pane);
+
+    setMinimumSize(new Dimension(340, 480));
   }
 
   @Override public void run()
@@ -340,6 +394,9 @@ public final class ui_App
             + (Runtime.getRuntime().totalMemory() / (1024 * 1024)) + "Mb [" + p3.getValue() + "%]");
       }
     }, 400L, 350L);
+
+    revalidate();
+    System.out.println("START");
   }
 
 }

@@ -13,6 +13,7 @@ import java.net.URISyntaxException;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 
 public final class stx_Helper
 {
@@ -40,6 +41,18 @@ public final class stx_Helper
     button.setBackground(null);
     button.setAlignmentX(Component.CENTER_ALIGNMENT);
     return button;
+  }
+
+  public static JCheckBox make(String label, String tooltip, boolean defaultval)
+  {
+    JCheckBox box = new JCheckBox(label, defaultval);
+    box.setToolTipText(tooltip);
+    return box;
+  }
+
+  public static void convert(File original, File target, boolean deleteOriginal, boolean useJPG, boolean generateGIF, boolean sameName)
+  {
+
   }
 
   public static boolean has_perms(File f)
