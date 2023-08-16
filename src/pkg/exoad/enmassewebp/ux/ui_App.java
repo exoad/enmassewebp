@@ -9,8 +9,15 @@ import java.awt.FlowLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.TimerTask;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -19,15 +26,21 @@ import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
+import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileView;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.ImageIcon;
 
 import com.jackmeng.stl.stl_Colors;
@@ -40,8 +53,40 @@ public final class ui_App
     implements
     Runnable
 {
-  // name, {tooltip, selected}
 
+  public static class use_TextOutStream
+      extends OutputStream
+  {
+    @Override public void write(byte[] buffer, int offset, int length)
+    {
+      SwingUtilities.invokeLater(() -> print(new String(buffer, offset, length)));
+    }
+
+    @Override public void write(int b) throws IOException
+    {
+      write(new byte[] { (byte) b }, 0, 1);
+    }
+  }
+
+  public static void print(String str)
+  {
+    try
+    {
+      ((HTMLEditorKit) process_output.getEditorKit()).insertHTML((HTMLDocument) process_output.getDocument(),
+          ((HTMLDocument) process_output.getDocument()).getLength(), str, 0, 0, null);
+    } catch (BadLocationException | IOException e)
+    {
+      e.printStackTrace();
+    }
+  }
+
+  private static JEditorPane process_output;
+  static
+  {
+    process_output = new JEditorPane();
+    process_output.setContentType("text/html");
+    process_output.setEditable(false);
+  }
   private JFileChooser jfc;
   private JProgressBar p1, p2, p3;
   private final String FILES_LOAD = "Files Buffer [Inactive]", BUFF_HEALTH = "Buffer Health [Inactive]",
@@ -220,15 +265,21 @@ public final class ui_App
             else if (file.isDirectory())
             {
               System.out.println("[FILE I/O]: Expanding (DEEP_SCAN) FOLDER: " + file.getAbsolutePath());
-              for (File file_expanded : file.listFiles())
+              try (Stream< Path > stream = Files.walk(Paths.get(file.getPath()), Integer.MAX_VALUE))
               {
-                if (stx_Helper.has_perms(file_expanded))
-                {
-                  System.out.println("[FILE I/O]: Loaded FILE_EXPANDED: " + file_expanded.getAbsolutePath());
-                  files.add(file);
-                  p1.setValue(files.size() / jfc.getSelectedFiles().length);
-                  p1.setToolTipText(Double.toString(files.size() / (double) jfc.getSelectedFiles().length));
-                }
+                stream.filter(p -> !Files.isDirectory(p)).map(p -> p.toString().toLowerCase())
+                    .filter(f -> f.endsWith(".webp")).collect(Collectors.toList()).forEach(x -> {
+                      System.out.println("[FILE I/O]: DEEP_SCAN saw: " + x);
+                      File file_expanded = new File(x);
+                      System.out.println(
+                          "[FILE I/O]: Loaded (DEEP_SCAN) FILE_EXPANDED: " + file_expanded.getAbsolutePath());
+                      files.add(file_expanded);
+                      p1.setValue(files.size() / jfc.getSelectedFiles().length);
+                      p1.setToolTipText(Double.toString(files.size() / (double) jfc.getSelectedFiles().length));
+                    });
+              } catch (IOException e)
+              {
+                e.printStackTrace();
               }
             }
           }
@@ -242,12 +293,15 @@ public final class ui_App
           p1.setValue(100); // %
           p1.setToolTipText("Loaded: " + files.size());
         }
-
       }
     });
     select_btn.setBackground(stl_Colors.hexToRGB("#8ed15a"));
     select_btn.setForeground(Color.black);
     select_btn.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+    JScrollPane jsp_output_text = new JScrollPane();
+
+    jsp_output_text.setViewportView(process_output);
 
     add(app_title);
     add(new ui_Socials());
@@ -255,6 +309,7 @@ public final class ui_App
     add(select_btn);
     add(Box.createVerticalStrut(15));
     add(controls);
+    add(jsp_output_text);
     add(progress_pane);
   }
 

@@ -44,7 +44,7 @@ public final class stx_Helper
 
   public static boolean has_perms(File f)
   {
-    return f.isFile() && f.canRead() && f.canWrite() && f.getAbsolutePath().toLowerCase().endsWith(".webp");
+    return f.isFile() && f.canRead() && f.getAbsolutePath().toLowerCase().endsWith(".webp");
   }
 
   public static Image repack(BufferedImage image, int width, int height)
