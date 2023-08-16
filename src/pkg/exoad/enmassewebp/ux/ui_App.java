@@ -47,6 +47,7 @@ import javax.swing.ImageIcon;
 import com.jackmeng.stl.stl_Chrono;
 import com.jackmeng.stl.stl_Colors;
 
+import pkg.exoad.enmassewebp.EnMasseWebp;
 import pkg.exoad.enmassewebp._1const;
 
 public final class ui_App
@@ -92,7 +93,6 @@ public final class ui_App
   {
     process_output = new JEditorPane();
     process_output.setContentType("text/html");
-    process_output.setAutoscrolls(true);
     process_output.setText("<html><body>");
   }
   private JFileChooser jfc;
@@ -126,11 +126,11 @@ public final class ui_App
                     </strong>
                     <br />
                     <em style="font-size: 9.5px; color: #828282;">
-                      made by exoad
+                      version %d | made by exoad
                     </em>
               </p>
             </html>
-              """);
+              """.formatted(EnMasseWebp.__VERSION__));
     app_title.setMaximumSize(app_title.getPreferredSize());
     app_title.setAlignmentX(Component.CENTER_ALIGNMENT);
 
@@ -202,20 +202,32 @@ public final class ui_App
     / jcb.addActionListener(ev -> preload_Properties.put(x, stl_Struct.make_pair(y.first, jcb.isSelected()))); /
     /---------------------------------------------------------------------------------------------------------*/
 
+    JButton start_action = new JButton("<html><strong>Start conversion</strong></html>");
     JButton kill_action = new JButton("<html><strong>Kill conversion</strong></html>");
     kill_action.setIconTextGap(5);
     kill_action.setIcon(new ImageIcon(stx_Helper.repack(_1const.assets.image("assets/warning.png"), 20, 20)));
     kill_action.setEnabled(false);
     kill_action.setToolTipText("Kill the conversion process");
     kill_action.setAlignmentX(Component.LEFT_ALIGNMENT);
+    kill_action.addActionListener(ev -> {
+      worker.shutdownNow();
+      worker = Executors.newWorkStealingPool();
+      start_action.setEnabled(false);
+      kill_action.setEnabled(false);
+    });
 
-    JButton start_action = new JButton("<html><strong>Start conversion</strong></html>");
     start_action.setEnabled(false);
     start_action.setIcon(new ImageIcon(stx_Helper.repack(_1const.assets.image("assets/start.png"), 20, 20)));
     start_action.setToolTipText("Starts the conversion for the selected medium");
     start_action.setAlignmentX(Component.LEFT_ALIGNMENT);
     start_action.addActionListener(ev -> {
       kill_action.setEnabled(true);
+      System.out.println("<strong>STARTING Conversion Process. Use the \"Kill Conversion\" button to stop it</strong>");
+      worker.submit(() -> {
+        for (Component r : controls_naming.getComponents())
+          if (r instanceof JComponent jc)
+            jc.setEnabled(false);
+      });
     });
 
     JPanel action_controls = new JPanel();
@@ -356,13 +368,15 @@ public final class ui_App
     JScrollPane jsp_output_text = new JScrollPane();
     jsp_output_text.setViewportView(process_output);
 
-    add(app_title, 0);
+    add(app_title);
+    add(Box.createVerticalStrut(5));
     add(new ui_Socials());
     add(jcb_deepscan);
     add(select_btn);
     add(runbg_btn);
     add(Box.createVerticalStrut(10));
     add(controls);
+    add(Box.createVerticalStrut(5));
     add(action_controls);
     add(jsp_output_text);
     add(progress_pane);
