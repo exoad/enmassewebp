@@ -243,26 +243,58 @@ public final class ui_App
     runbg_btn
         .setMaximumSize(new Dimension(runbg_btn.getPreferredSize().width + 40, runbg_btn.getPreferredSize().height));
     runbg_btn.setAlignmentX(Component.CENTER_ALIGNMENT);
+    runbg_btn.addActionListener(ev -> {
+      if (jfc == null)
+        jfc = new JFileChooser(System.getProperty("user.home"));
+      jfc.setAcceptAllFileFilterUsed(false);
+      jfc.setMultiSelectionEnabled(true);
+      jfc.setFileView(new FileView() {
+        @Override public Icon getIcon(File f)
+        {
+          if (f.isDirectory())
+            return new ImageIcon(stx_Helper.repack(_1const.assets.image("assets/folder-icon.png"), 22, 22));
+          return new ImageIcon(stx_Helper.repack(_1const.assets.image("assets/image-icon.png"), 22, 22)); // this line
+                                                                                                          // is useless
+                                                                                                          // here but oh
+                                                                                                          // well
+        }
+      });
+      jfc.setFileFilter((new FileFilter() {
+
+        @Override public String getDescription()
+        {
+          return "Folders";
+        }
+
+        @Override public boolean accept(File f)
+        {
+          return f.isDirectory();
+        }
+      }));
+      int res = jfc.showOpenDialog(this);
+      if (res == JFileChooser.APPROVE_OPTION && jfc.getSelectedFiles().length > 0)
+      {
+      }
+    });
 
     JButton select_btn = new JButton(
-        "<html><p style=\"text-align:center\"><strong>Select folder/file(s)</strong><br /><em>Or drag and drop them here</em></p></html>");
+        "<html><p style=\"text-align:center\"><strong>Select folder/file(s)</strong><br /><em>One go conversion</em></p></html>");
     select_btn.addActionListener(ev -> {
       if (jfc == null)
-      {
         jfc = new JFileChooser(System.getProperty("user.home"));
-        jfc.setFileFilter((new FileFilter() {
 
-          @Override public String getDescription()
-          {
-            return "Web Picture (*.webp)";
-          }
+      jfc.setFileFilter((new FileFilter() {
 
-          @Override public boolean accept(File f)
-          {
-            return f.isDirectory() || stx_Helper.has_perms(f);
-          }
-        }));
-      }
+        @Override public String getDescription()
+        {
+          return "Web Picture (*.webp)";
+        }
+
+        @Override public boolean accept(File f)
+        {
+          return f.isDirectory() || stx_Helper.has_perms(f);
+        }
+      }));
       jfc.setAcceptAllFileFilterUsed(false); // might be funky
       jfc.setPreferredSize(new Dimension(800, 650));
       jfc.setMultiSelectionEnabled(true);
@@ -289,7 +321,8 @@ public final class ui_App
           {
             if (file.isFile())
             {
-              System.out.println("[FILE I/O]: Loaded FILE: " + file.getAbsolutePath());
+              System.out.println("[FILE I/O]: Loaded FILE: <p style=\"background-color:#d1c566;color:#000\">"
+                  + file.getAbsolutePath() + "</p>");
               files.add(file);
               p1.setValue(files.size() / jfc.getSelectedFiles().length);
               p1.setToolTipText(Double.toString(files.size() / (double) jfc.getSelectedFiles().length));
@@ -301,7 +334,9 @@ public final class ui_App
               {
                 if (stx_Helper.has_perms(file_expanded))
                 {
-                  System.out.println("[FILE I/O]: Loaded FILE_EXPANDED: " + file_expanded.getAbsolutePath());
+                  System.out
+                      .println("[FILE I/O]: Loaded FILE_EXPANDED: <p style=\"background-color:#d1c566;color:#000\">"
+                          + file_expanded.getAbsolutePath() + "</p>");
                   files.add(file);
                   p1.setValue(files.size() / jfc.getSelectedFiles().length);
                   p1.setToolTipText(Double.toString(files.size() / (double) jfc.getSelectedFiles().length));
@@ -317,7 +352,9 @@ public final class ui_App
           {
             if (file.isFile())
             {
-              System.out.println("[FILE I/O]: Loaded (DEEP_SCAN) FILE: " + file.getAbsolutePath());
+              System.out
+                  .println("[FILE I/O]: Loaded (DEEP_SCAN) FILE: <p style=\"background-color:#d1c566;color:#000\">"
+                      + file.getAbsolutePath() + "</p>");
               files.add(file);
               p1.setValue(files.size() / jfc.getSelectedFiles().length);
               p1.setToolTipText(Double.toString(files.size() / (double) jfc.getSelectedFiles().length));
@@ -329,10 +366,10 @@ public final class ui_App
               {
                 stream.filter(p -> !Files.isDirectory(p)).map(p -> p.toString().toLowerCase())
                     .filter(f -> f.endsWith(".webp")).collect(Collectors.toList()).forEach(x -> {
-                      System.out.println("[FILE I/O]: DEEP_SCAN saw: " + x);
                       File file_expanded = new File(x);
                       System.out.println(
-                          "[FILE I/O]: Loaded (DEEP_SCAN) FILE_EXPANDED: " + file_expanded.getAbsolutePath());
+                          "[FILE I/O]: Loaded (DEEP_SCAN) FILE_EXPANDED: <p style=\"background-color:#d1c566;color:#000\">"
+                              + file_expanded.getAbsolutePath() + "</p>");
                       files.add(file_expanded);
                       p1.setValue(files.size() / jfc.getSelectedFiles().length);
                       p1.setToolTipText(Double.toString(files.size() / (double) jfc.getSelectedFiles().length));
@@ -366,6 +403,7 @@ public final class ui_App
     select_btn.setAlignmentX(Component.CENTER_ALIGNMENT);
 
     JScrollPane jsp_output_text = new JScrollPane();
+    jsp_output_text.setBorder(BorderFactory.createTitledBorder("<html><strong>Logger</strong></html>"));
     jsp_output_text.setViewportView(process_output);
 
     add(app_title);
