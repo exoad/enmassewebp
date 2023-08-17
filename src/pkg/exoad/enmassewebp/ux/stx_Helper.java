@@ -14,13 +14,6 @@ import java.net.URISyntaxException;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.html.HTMLDocument;
-import javax.swing.text.html.HTMLEditorKit;
-
-import com.jackmeng.stl.stl_Chrono;
-
-import pkg.exoad.enmassewebp._1const;
 
 public final class stx_Helper
 {
@@ -85,18 +78,4 @@ public final class stx_Helper
     };
   }
 
-  public static void print(String str)
-  {
-    try
-    {
-      ((HTMLEditorKit) _1const.process_output.getEditorKit()).insertHTML((HTMLDocument) _1const.process_output.getDocument(),
-          ((HTMLDocument) _1const.process_output.getDocument()).getLength(),
-          "<strong style=\"color:#8ed15a\">" + stl_Chrono.format_millis("HH:mm:ss") + "</strong> | " + str, 0,
-          0, null);
-      _1const.process_output.setCaretPosition(_1const.process_output.getDocument().getLength());
-    } catch (BadLocationException | IOException e)
-    {
-      e.printStackTrace();
-    }
-  }
 }
