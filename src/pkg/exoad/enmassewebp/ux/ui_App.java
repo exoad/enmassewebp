@@ -93,7 +93,8 @@ public final class ui_App
   {
     process_output = new JEditorPane();
     process_output.setContentType("text/html");
-    process_output.setText("<html><body>");
+    process_output.setEditable(false);
+    process_output.setAutoscrolls(true);
   }
   private JFileChooser jfc;
   private JProgressBar p1, p2, p3;
