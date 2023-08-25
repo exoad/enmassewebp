@@ -15,7 +15,7 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.plaf.FontUIResource;
 
-import com.formdev.flatlaf.intellijthemes.FlatMonocaiIJTheme;
+import com.formdev.flatlaf.intellijthemes.FlatSpacegrayIJTheme;
 import com.formdev.flatlaf.util.SystemInfo;
 
 import pkg.exoad.enmassewebp.ux.ui_App;
@@ -38,7 +38,7 @@ public final class EnMasseWebp
       System.setProperty("apple.awt.application.appearance", "system");
     try
     {
-      UIManager.setLookAndFeel(new FlatMonocaiIJTheme());
+      UIManager.setLookAndFeel(new FlatSpacegrayIJTheme());
       UIManager.put("ScrollBar.showButtons", false);
       UIManager.put("JScrollPane.smoothScrolling", true);
       UIManager.put("SplitPaneDivider.gripDotCount", 4);

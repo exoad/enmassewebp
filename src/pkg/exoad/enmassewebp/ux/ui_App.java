@@ -238,45 +238,47 @@ public final class ui_App
     action_controls.setMaximumSize(action_controls.getPreferredSize());
     action_controls.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-    JButton runbg_btn = new JButton("<html><p style=\"text-align:center\"><strong>Scan background</strong></p></html>");
-    runbg_btn.setToolTipText(
-        "Runs a continuous check on the user's home directory for any webp pictures and converts them.");
-    runbg_btn
-        .setMaximumSize(new Dimension(runbg_btn.getPreferredSize().width + 40, runbg_btn.getPreferredSize().height));
-    runbg_btn.setAlignmentX(Component.CENTER_ALIGNMENT);
-    runbg_btn.addActionListener(ev -> {
-      if (jfc == null)
-        jfc = new JFileChooser(System.getProperty("user.home"));
-      jfc.setAcceptAllFileFilterUsed(false);
-      jfc.setMultiSelectionEnabled(true);
-      jfc.setFileView(new FileView() {
-        @Override public Icon getIcon(File f)
-        {
-          if (f.isDirectory())
-            return new ImageIcon(stx_Helper.repack(_1const.assets.image("assets/folder-icon.png"), 22, 22));
-          return new ImageIcon(stx_Helper.repack(_1const.assets.image("assets/image-icon.png"), 22, 22)); // this line
-                                                                                                          // is useless
-                                                                                                          // here but oh
-                                                                                                          // well
-        }
-      });
-      jfc.setFileFilter((new FileFilter() {
-
-        @Override public String getDescription()
-        {
-          return "Folders";
-        }
-
-        @Override public boolean accept(File f)
-        {
-          return f.isDirectory();
-        }
-      }));
-      int res = jfc.showOpenDialog(this);
-      if (res == JFileChooser.APPROVE_OPTION && jfc.getSelectedFiles().length > 0)
-      {
-      }
-    });
+    /*-------------------------------------------------------------------------------------------------------------------- /
+    / JButton runbg_btn = new JButton("<html><p style=\"text-align:center\"><strong>Scan background</strong></p></html>"); /
+    / runbg_btn.setToolTipText(                                                                                            /
+    /     "Runs a continuous check on the user's home directory for any webp pictures and converts them.");                /
+    / runbg_btn                                                                                                            /
+    /     .setMaximumSize(new Dimension(runbg_btn.getPreferredSize().width + 40, runbg_btn.getPreferredSize().height));    /
+    / runbg_btn.setAlignmentX(Component.CENTER_ALIGNMENT);                                                                 /
+    / runbg_btn.addActionListener(ev -> {                                                                                  /
+    /   if (jfc == null)                                                                                                   /
+    /     jfc = new JFileChooser(System.getProperty("user.home"));                                                         /
+    /   jfc.setAcceptAllFileFilterUsed(false);                                                                             /
+    /   jfc.setMultiSelectionEnabled(true);                                                                                /
+    /   jfc.setFileView(new FileView() {                                                                                   /
+    /     @Override public Icon getIcon(File f)                                                                            /
+    /     {                                                                                                                /
+    /       if (f.isDirectory())                                                                                           /
+    /         return new ImageIcon(stx_Helper.repack(_1const.assets.image("assets/folder-icon.png"), 22, 22));             /
+    /       return new ImageIcon(stx_Helper.repack(_1const.assets.image("assets/image-icon.png"), 22, 22)); // this line   /
+    /                                                                                                       // is useless  /
+    /                                                                                                       // here but oh /
+    /                                                                                                       // well        /
+    /     }                                                                                                                /
+    /   });                                                                                                                /
+    /   jfc.setFileFilter((new FileFilter() {                                                                              /
+    /                                                                                                                      /
+    /     @Override public String getDescription()                                                                         /
+    /     {                                                                                                                /
+    /       return "Folders";                                                                                              /
+    /     }                                                                                                                /
+    /                                                                                                                      /
+    /     @Override public boolean accept(File f)                                                                          /
+    /     {                                                                                                                /
+    /       return f.isDirectory();                                                                                        /
+    /     }                                                                                                                /
+    /   }));                                                                                                               /
+    /   int res = jfc.showOpenDialog(this);                                                                                /
+    /   if (res == JFileChooser.APPROVE_OPTION && jfc.getSelectedFiles().length > 0)                                       /
+    /   {                                                                                                                  /
+    /   }                                                                                                                  /
+    / });                                                                                                                  /
+    /---------------------------------------------------------------------------------------------------------------------*/
 
     JButton select_btn = new JButton(
         "<html><p style=\"text-align:center\"><strong>Select folder/file(s)</strong><br /><em>One go conversion</em></p></html>");
@@ -412,7 +414,9 @@ public final class ui_App
     add(new ui_Socials());
     add(jcb_deepscan);
     add(select_btn);
-    add(runbg_btn);
+    /*--------------- /
+    / add(runbg_btn); /
+    /----------------*/
     add(Box.createVerticalStrut(10));
     add(controls);
     add(Box.createVerticalStrut(5));

@@ -21,7 +21,6 @@ public final class stx_Helper
   {
     JButton button = new JButton(icon);
     button.addActionListener(ev -> r.run());
-    button.setBorderPainted(false);
     button.setFocusPainted(false);
     button.setRolloverEnabled(false);
     button.setToolTipText(tooltip);
