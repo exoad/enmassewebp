@@ -6,8 +6,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -15,12 +14,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.TimerTask;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -32,10 +33,10 @@ import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
-import javax.swing.JProgressBar;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
-import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileView;
@@ -44,8 +45,10 @@ import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.ImageIcon;
 
+import com.jackmeng.stl.stl_Callback;
 import com.jackmeng.stl.stl_Chrono;
 import com.jackmeng.stl.stl_Colors;
+import com.jackmeng.stl.stl_Struct;
 
 import pkg.exoad.enmassewebp.EnMasseWebp;
 import pkg.exoad.enmassewebp._1const;
@@ -88,6 +91,19 @@ public final class ui_App
     }
   }
 
+  static Random rnd = new Random();
+  static String generate_str(int len)
+  {
+    String E = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz";
+    StringBuilder sb = new StringBuilder();
+    while (sb.length() < len)
+    {
+      int index = (int) (rnd.nextFloat() * E.length());
+      sb.append(E.charAt(index));
+    }
+    return sb.toString();
+  }
+
   private static JEditorPane process_output;
   static
   {
@@ -95,13 +111,18 @@ public final class ui_App
     process_output.setContentType("text/html");
     process_output.setEditable(false);
     process_output.setAutoscrolls(true);
+
+    JPopupMenu popupMenu = new JPopupMenu();
+
+    JMenuItem clearProcessOut = new JMenuItem("Clear text");
+    clearProcessOut.addActionListener(ev -> process_output.setText(""));
+    popupMenu.add(clearProcessOut);
+
+    process_output.setComponentPopupMenu(popupMenu);
   }
   private JFileChooser jfc;
-  private JProgressBar p1, p2, p3;
-  private final String FILES_LOAD = "Files Buffer [Inactive]", BUFF_HEALTH = "Buffer Health [Inactive]",
-      MEM_USAGE = "Memory Usage";
 
-  private ExecutorService worker = Executors.newWorkStealingPool();
+  private ExecutorService worker = Executors.newSingleThreadExecutor();
 
   private ArrayList< File > files = new ArrayList<>();
 
@@ -134,41 +155,6 @@ public final class ui_App
               """.formatted(EnMasseWebp.__VERSION__));
     app_title.setMaximumSize(app_title.getPreferredSize());
     app_title.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-    p1 = new JProgressBar(SwingConstants.HORIZONTAL);
-    p1.setValue(0);
-    p1.setStringPainted(true);
-    p1.setIndeterminate(true);
-    p1.setForeground(stl_Colors.hexToRGB("#8ed15a"));
-    p1.setToolTipText(FILES_LOAD);
-    p1.setMaximum(100);
-    p1.setMinimum(0);
-
-    p2 = new JProgressBar(SwingConstants.HORIZONTAL);
-    p2.setValue(0);
-    p2.setStringPainted(true);
-    p2.setIndeterminate(true);
-    p2.setToolTipText(BUFF_HEALTH);
-    p2.setForeground(stl_Colors.hexToRGB("#5aa2d1"));
-    p2.setMaximum(100);
-    p2.setMinimum(0);
-
-    p3 = new JProgressBar(SwingConstants.HORIZONTAL);
-    p3.setValue(0);
-    p3.setStringPainted(true);
-    p3.setIndeterminate(true);
-    p3.setToolTipText(MEM_USAGE);
-    p3.setForeground(stl_Colors.hexToRGB("#d1685a"));
-    p3.setMaximum(100);
-    p3.setMinimum(0);
-
-    JPanel progress_pane = new JPanel();
-    progress_pane.setLayout(new FlowLayout(FlowLayout.CENTER));
-
-    progress_pane.add(p1);
-    progress_pane.add(p2);
-    progress_pane.add(p3);
-    progress_pane.setMaximumSize(progress_pane.getPreferredSize());
 
     JPanel controls = new JPanel();
     controls.setEnabled(false);
@@ -225,9 +211,64 @@ public final class ui_App
       kill_action.setEnabled(true);
       System.out.println("<strong>STARTING Conversion Process. Use the \"Kill Conversion\" button to stop it</strong>");
       worker.submit(() -> {
+        AtomicLong converted = new AtomicLong(0);
+        AtomicLong failed = new AtomicLong(0);
         for (Component r : controls_naming.getComponents())
           if (r instanceof JComponent jc)
             jc.setEnabled(false);
+        stl_Callback< String, File > random = random_name.isSelected() ? e -> new File(
+            e.getParentFile().getAbsolutePath() + "/" + generate_str(10) + "." + (prefer_png.isSelected() ? "png"
+                : "jpg")).getAbsolutePath()
+            : e -> new File(
+                e.getParentFile().getAbsolutePath() + "/"
+                    + e.getName().replaceAll("\\.webp$", prefer_png.isSelected() ? ".png"
+                        : ".jpg")).getAbsolutePath();
+        stl_Callback< ?, File > delete_original = delete_orig.isSelected() ? File::delete : e -> null;
+        stl_Callback< Void, stl_Struct.struct_Pair< BufferedImage, File > > preferPng = prefer_png.isSelected()
+            ? eee -> {
+              try
+              {
+                ImageIO.write(eee.first, "png", eee.second);
+              } catch (IOException e1)
+              {
+                e1.printStackTrace();
+                failed.set(failed.get() + 1);
+              }
+              return (Void) null;
+            }
+            : eee -> {
+              try
+              {
+                ImageIO.write(eee.first, "jpg", eee.second);
+              } catch (IOException e1)
+              {
+                e1.printStackTrace();
+                failed.set(failed.get() + 1);
+              }
+              return (Void) null;
+            };
+        files.forEach(x -> {
+          File newFile = new File(random.call(x));
+          System.out.println("Reading: " + x.getAbsolutePath() + " --> " + newFile.getAbsolutePath());
+          try
+          {
+            BufferedImage webpImage = ImageIO.read(x);
+            preferPng.call(stl_Struct.make_pair(webpImage, newFile));
+            delete_original.call(x);
+          } catch (Exception e1)
+          {
+            e1.printStackTrace();
+            failed.set(failed.get() + 1);
+          }
+          converted.set(converted.get() + 1);
+          System.out.println("Converted: " + x.getAbsolutePath() + " --> " + newFile.getAbsolutePath());
+        });
+        System.out.println("[DONE] CONVERSION COMPLETED");
+        System.out.println("Converted: " + converted.get());
+        System.out.println("Failed: " + failed.get());
+        start_action.setEnabled(false);
+        kill_action.setEnabled(false);
+        files.clear();
       });
     });
 
@@ -282,10 +323,10 @@ public final class ui_App
 
     JButton select_btn = new JButton(
         "<html><p style=\"text-align:center\"><strong>Select folder/file(s)</strong><br /><em>One go conversion</em></p></html>");
+    select_btn.setBorderPainted(false);
     select_btn.addActionListener(ev -> {
       if (jfc == null)
         jfc = new JFileChooser(System.getProperty("user.home"));
-
       jfc.setFileFilter((new FileFilter() {
 
         @Override public String getDescription()
@@ -314,8 +355,7 @@ public final class ui_App
       int res = jfc.showOpenDialog(this);
       if (res == JFileChooser.APPROVE_OPTION && jfc.getSelectedFiles().length > 0)
       {
-        p1.setToolTipText("Files Buffer");
-        p1.setIndeterminate(false);
+
         files.clear();
         if (!jcb_deepscan.isSelected())
         {
@@ -327,8 +367,7 @@ public final class ui_App
               System.out.println("[FILE I/O]: Loaded FILE: <p style=\"background-color:#d1c566;color:#000\">"
                   + file.getAbsolutePath() + "</p>");
               files.add(file);
-              p1.setValue(files.size() / jfc.getSelectedFiles().length);
-              p1.setToolTipText(Double.toString(files.size() / (double) jfc.getSelectedFiles().length));
+
             }
             else if (file.isDirectory())
             {
@@ -341,8 +380,7 @@ public final class ui_App
                       .println("[FILE I/O]: Loaded FILE_EXPANDED: <p style=\"background-color:#d1c566;color:#000\">"
                           + file_expanded.getAbsolutePath() + "</p>");
                   files.add(file);
-                  p1.setValue(files.size() / jfc.getSelectedFiles().length);
-                  p1.setToolTipText(Double.toString(files.size() / (double) jfc.getSelectedFiles().length));
+
                 }
               }
             }
@@ -359,23 +397,20 @@ public final class ui_App
                   .println("[FILE I/O]: Loaded (DEEP_SCAN) FILE: <p style=\"background-color:#d1c566;color:#000\">"
                       + file.getAbsolutePath() + "</p>");
               files.add(file);
-              p1.setValue(files.size() / jfc.getSelectedFiles().length);
-              p1.setToolTipText(Double.toString(files.size() / (double) jfc.getSelectedFiles().length));
+
             }
             else if (file.isDirectory())
             {
               System.out.println("[FILE I/O]: Expanding (DEEP_SCAN) FOLDER: " + file.getAbsolutePath());
               try (Stream< Path > stream = Files.walk(Paths.get(file.getPath()), Integer.MAX_VALUE))
               {
-                stream.filter(p -> !Files.isDirectory(p)).map(p -> p.toString().toLowerCase())
+                stream.filter(p -> !Files.isDirectory(p)).map(Path::toString)
                     .filter(f -> f.endsWith(".webp")).collect(Collectors.toList()).forEach(x -> {
                       File file_expanded = new File(x);
                       System.out.println(
                           "[FILE I/O]: Loaded (DEEP_SCAN) FILE_EXPANDED: <p style=\"background-color:#d1c566;color:#000\">"
                               + file_expanded.getAbsolutePath() + "</p>");
                       files.add(file_expanded);
-                      p1.setValue(files.size() / jfc.getSelectedFiles().length);
-                      p1.setToolTipText(Double.toString(files.size() / (double) jfc.getSelectedFiles().length));
                     });
               } catch (IOException e)
               {
@@ -390,8 +425,6 @@ public final class ui_App
           for (Component r : controls_naming.getComponents())
             if (r instanceof JComponent jc)
               jc.setEnabled(true);
-          p1.setValue(100); // %
-          p1.setToolTipText("Loaded: " + files.size());
           start_action.setEnabled(true);
         }
         else
@@ -422,7 +455,6 @@ public final class ui_App
     add(Box.createVerticalStrut(5));
     add(action_controls);
     add(jsp_output_text);
-    add(progress_pane);
 
     setMinimumSize(new Dimension(340, 480));
   }
@@ -433,24 +465,6 @@ public final class ui_App
     setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
     setLocationRelativeTo(null);
     setVisible(true);
-    p3.setIndeterminate(false);
-    p3.addMouseListener(new MouseAdapter() {
-      @Override public void mouseClicked(MouseEvent event)
-      {
-        Runtime.getRuntime().gc();
-        System.out.println("[SYS]: Ran an invoked GCEvent");
-      }
-    });
-    _1const.RUN_Q_1.scheduleAtFixedRate(new TimerTask() {
-      @Override public void run()
-      {
-        p3.setValue((int) ((((double) Runtime.getRuntime().totalMemory() - (double) Runtime.getRuntime().freeMemory())
-            / (double) Runtime.getRuntime().totalMemory()) * 100));
-        p3.setToolTipText("Memory Usage: "
-            + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024 * 1024)) + "Mb / "
-            + (Runtime.getRuntime().totalMemory() / (1024 * 1024)) + "Mb [" + p3.getValue() + "%]");
-      }
-    }, 400L, 350L);
 
     revalidate();
     System.out.println("START");
