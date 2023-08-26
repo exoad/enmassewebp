@@ -60,6 +60,27 @@ public final class ui_App
     Runnable
 {
 
+  public static class ui_Socials
+      extends
+      JPanel
+  {
+    public ui_Socials()
+    {
+      setPreferredSize(new Dimension(_2const.WIDTH, 40));
+      setMaximumSize(getPreferredSize());
+      setLayout(new ux_WrapLayout(FlowLayout.CENTER, 4, 0));
+      add(stx_Helper.make(new ImageIcon(stx_Helper.repack(_1const.assets.image("assets/github-logo.png"), 20, 20)),
+          "<html>Visit this project on <strong>GitHub!</strong></html>",
+          stx_Helper.browse_safe("https://github.com/exoad/enmassewebp")));
+      add(stx_Helper.make(new ImageIcon(stx_Helper.repack(_1const.assets.image("assets/wikipedia-logo.png"), 20, 20)),
+          "<html>Learn what WebP is about</html>",
+          stx_Helper.browse_safe("https://en.wikipedia.org/wiki/WebP")));
+      add(stx_Helper.make(new ImageIcon(stx_Helper.repack(_1const.assets.image("assets/google-logo.png"), 20, 20)),
+          "<html>Google's WebP specifications</html>",
+          stx_Helper.browse_safe("https://developers.google.com/speed/webp")));
+    }
+  }
+
   public static class use_TextOutStream
       extends OutputStream
   {
@@ -92,6 +113,7 @@ public final class ui_App
   }
 
   static Random rnd = new Random();
+
   static String generate_str(int len)
   {
     String E = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz";
@@ -121,9 +143,7 @@ public final class ui_App
     process_output.setComponentPopupMenu(popupMenu);
   }
   private JFileChooser jfc;
-
   private ExecutorService worker = Executors.newSingleThreadExecutor();
-
   private ArrayList< File > files = new ArrayList<>();
 
   public ui_App()
@@ -250,6 +270,7 @@ public final class ui_App
         files.forEach(x -> {
           File newFile = new File(random.call(x));
           System.out.println("Reading: " + x.getAbsolutePath() + " --> " + newFile.getAbsolutePath());
+          boolean failedCurr = false;
           try
           {
             BufferedImage webpImage = ImageIO.read(x);
@@ -259,9 +280,13 @@ public final class ui_App
           {
             e1.printStackTrace();
             failed.set(failed.get() + 1);
+            failedCurr = true;
+            System.exit(0);
           }
-          converted.set(converted.get() + 1);
-          System.out.println("Converted: " + x.getAbsolutePath() + " --> " + newFile.getAbsolutePath());
+          if (!failedCurr)
+            converted.set(converted.get() + 1);
+          System.out.println(failedCurr ? "Failed Conversion: " + x.getAbsolutePath()
+              : "Converted: " + x.getAbsolutePath() + " --> " + newFile.getAbsolutePath());
         });
         System.out.println("[DONE] CONVERSION COMPLETED");
         System.out.println("Converted: " + converted.get());
